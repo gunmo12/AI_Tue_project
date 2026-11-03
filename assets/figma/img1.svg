@@ -1,0 +1,35 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="310" height="150" viewBox="0 0 310 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="&#236;&#163;&#188;&#234;&#176;&#132; &#236;&#167;&#128;&#236;&#182;&#156; &#236;&#132;&#160; &#234;&#183;&#184;&#235;&#158;&#152;&#237;&#148;&#132;">
+<g id="Vector">
+<path d="M0 20H310Z" fill="black"/>
+<path d="M0 20H310" stroke="#EEEAF6"/>
+</g>
+<g id="Vector_2">
+<path d="M0 55H310Z" fill="black"/>
+<path d="M0 55H310" stroke="#EEEAF6"/>
+</g>
+<g id="Vector_3">
+<path d="M0 90H310Z" fill="black"/>
+<path d="M0 90H310" stroke="#EEEAF6"/>
+</g>
+<g id="Vector_4">
+<path d="M0 125H310Z" fill="black"/>
+<path d="M0 125H310" stroke="#EEEAF6"/>
+</g>
+<path id="Vector_5" d="M12 145V90L60 96L108 110L156 82L204 68L252 82L300 48V145H12Z" fill="url(#paint0_linear_0_196)"/>
+<path id="Vector_6" d="M12 90L60 96L108 110L156 82L204 68L252 82L300 48" stroke-width="2.5" stroke="#8550ED"/>
+<path id="Vector_7" d="M12 94C14.2091 94 16 92.2091 16 90C16 87.7909 14.2091 86 12 86C9.79086 86 8 87.7909 8 90C8 92.2091 9.79086 94 12 94Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+<path id="Vector_8" d="M60 100C62.2091 100 64 98.2091 64 96C64 93.7909 62.2091 92 60 92C57.7909 92 56 93.7909 56 96C56 98.2091 57.7909 100 60 100Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+<path id="Vector_9" d="M108 114C110.209 114 112 112.209 112 110C112 107.791 110.209 106 108 106C105.791 106 104 107.791 104 110C104 112.209 105.791 114 108 114Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+<path id="Vector_10" d="M156 86C158.209 86 160 84.2091 160 82C160 79.7909 158.209 78 156 78C153.791 78 152 79.7909 152 82C152 84.2091 153.791 86 156 86Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+<path id="Vector_11" d="M204 72C206.209 72 208 70.2091 208 68C208 65.7909 206.209 64 204 64C201.791 64 200 65.7909 200 68C200 70.2091 201.791 72 204 72Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+<path id="Vector_12" d="M252 86C254.209 86 256 84.2091 256 82C256 79.7909 254.209 78 252 78C249.791 78 248 79.7909 248 82C248 84.2091 249.791 86 252 86Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+<path id="Vector_13" d="M300 52C302.209 52 304 50.2091 304 48C304 45.7909 302.209 44 300 44C297.791 44 296 45.7909 296 48C296 50.2091 297.791 52 300 52Z" fill="white" stroke-width="2" stroke="#8550ED"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_196" x1="12" y1="48" x2="12" y2="145" gradientUnits="userSpaceOnUse">
+<stop stop-color="#9865F4" stop-opacity="0.25"/>
+<stop offset="1" stop-color="#9865F4" stop-opacity="0.01"/>
+</linearGradient>
+</defs>
+</svg>
