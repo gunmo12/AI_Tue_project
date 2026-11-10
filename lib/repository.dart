@@ -15,10 +15,17 @@ class SpendingRepository {
     final now = clock ?? DateTime.now();
     final db = await openDatabase(
       p.join(await getDatabasesPath(), filename),
-      version: 1,
+      version: 2,
+      onUpgrade: (db, oldVersion, _) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            'ALTER TABLE expenses ADD COLUMN prototype_month TEXT',
+          );
+        }
+      },
       onCreate: (db, version) async {
         await db.execute(
-          'CREATE TABLE expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount>0), category TEXT NOT NULL, merchant TEXT NOT NULL, memo TEXT NOT NULL, recurring INTEGER NOT NULL)',
+          'CREATE TABLE expenses (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL, amount INTEGER NOT NULL CHECK(amount>0), category TEXT NOT NULL, merchant TEXT NOT NULL, memo TEXT NOT NULL, recurring INTEGER NOT NULL, prototype_month TEXT)',
         );
         await db.execute('CREATE INDEX expense_date ON expenses(date)');
         await db.execute(
@@ -33,7 +40,11 @@ class SpendingRepository {
         await db.insert('settings', {'key': 'name', 'value': '반석'});
         await db.insert('settings', {'key': 'demo', 'value': '1'});
         for (final record in demoExpenses(now)) {
-          await db.insert('expenses', record.toMap());
+          await db.insert('expenses', {
+            ...record.toMap(),
+            if (record.date.startsWith(monthKey(now)))
+              'prototype_month': monthKey(now),
+          });
         }
         await db.insert('budgets', {
           'month': monthKey(now),
@@ -81,12 +92,33 @@ class SpendingRepository {
     } else {
       final count = await database.update(
         'expenses',
-        expense.toMap(),
+        {...expense.toMap(), 'prototype_month': null},
         where: 'id=?',
         whereArgs: [expense.id],
       );
       if (count != 1) throw StateError('지출 내역을 찾지 못했어요. 다시 확인해 주세요.');
     }
+  }
+
+  Future<void> applyPrototypeSpending(
+    DateTime month,
+    PrototypeSpending profile,
+  ) async {
+    final key = monthKey(month);
+    final records = profile.records(month);
+    await database.transaction((txn) async {
+      await txn.delete(
+        'expenses',
+        where: 'prototype_month = ?',
+        whereArgs: [key],
+      );
+      for (final expense in records) {
+        await txn.insert('expenses', {
+          ...expense.toMap(),
+          'prototype_month': key,
+        });
+      }
+    });
   }
 
   Future<void> deleteExpense(int id) async =>

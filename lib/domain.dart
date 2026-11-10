@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:intl/intl.dart';
 
@@ -275,6 +276,49 @@ List<Expense> demoExpenses(DateTime month) {
     );
   }
   return records;
+}
+
+enum PrototypeSpending {
+  everyday('일상 소비형', '식비, 교통, 카페 지출이 고르게 섞인 달', [1, 1, 0.65, 0.8, 1.2, 0.7]),
+  saving('절약 실천형', '필수 생활비 위주로 쓰고 카페와 쇼핑을 줄인 달', [
+    0.65,
+    0.85,
+    0.35,
+    0.5,
+    0.4,
+    0.45,
+  ]),
+  shopping('쇼핑 집중형', '쇼핑과 여가 지출이 큰 달', [1.1, 0.85, 2.7, 1, 1.4, 1.2]);
+
+  const PrototypeSpending(this.title, this.description, this.weights);
+  final String title, description;
+  final List<double> weights;
+
+  List<Expense> records(DateTime month) {
+    final random = Random(month.year * 1000 + month.month * 10 + index);
+    final days = DateTime(month.year, month.month + 1, 0).day;
+    return [
+      for (final item in demoExpenses(
+        month,
+      ).where((e) => e.date.startsWith(monthKey(month))))
+        Expense(
+          date: dayKey(
+            DateTime(month.year, month.month, random.nextInt(days) + 1),
+          ),
+          amount:
+              (item.amount *
+                      weights[categories.indexOf(item.category)] *
+                      (0.8 + random.nextDouble() * 0.4) /
+                      100)
+                  .round() *
+              100,
+          category: item.category,
+          merchant: '[예시] ${item.merchant}',
+          memo: title,
+          recurring: item.recurring,
+        ),
+    ];
+  }
 }
 
 Budget get demoBudget => const Budget(

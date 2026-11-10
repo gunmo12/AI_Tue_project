@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'cloud_report.dart';
 import 'domain.dart';
 import 'repository.dart';
 import 'design.dart';
@@ -89,6 +90,13 @@ class _LedgerScreenState extends State<LedgerScreen> {
   late DateTime month;
   int tab = 0, analysis = 0, week = 0;
   bool saving = false;
+  final cloudReport = CloudReport(
+    const String.fromEnvironment(
+      'MONEYMATE_CLOUD_URL',
+      defaultValue:
+          'https://moneymate-mobile-693983780937.asia-northeast3.run.app',
+    ),
+  );
   String categoryFilter = '', query = '';
   int? selectedDay;
   final searchController = TextEditingController();
@@ -307,20 +315,24 @@ class _LedgerScreenState extends State<LedgerScreen> {
   );
   Widget monthPicker() => panel(
     Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           tooltip: '이전 달',
           onPressed: () => moveMonth(-1),
           icon: const Icon(Icons.chevron_left, size: 20, color: muted),
         ),
-        TextButton(
-          onPressed: pickMonth,
-          child: txt(
-            '${month.year}년 ${month.month}월 ⌄',
-            size: 14,
-            color: ink,
-            bold: true,
+        Expanded(
+          child: TextButton(
+            onPressed: pickMonth,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: txt(
+                '${month.year}년 ${month.month}월 ⌄',
+                size: 14,
+                color: ink,
+                bold: true,
+              ),
+            ),
           ),
         ),
         IconButton(
@@ -498,7 +510,10 @@ class _LedgerScreenState extends State<LedgerScreen> {
         children: [
           section(
             '주간 지출 추이',
-            action: txt('합계 ${won(days.fold<int>(0, (n, v) => n + v))}', size: 10),
+            action: txt(
+              '합계 ${won(days.fold<int>(0, (n, v) => n + v))}',
+              size: 10,
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -589,17 +604,22 @@ class _LedgerScreenState extends State<LedgerScreen> {
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
-                  width: 100,
+                  width: 112,
                   child: DropdownButtonFormField<String>(
                     key: ValueKey('filter-$categoryFilter'),
                     initialValue: categoryFilter,
+                    isExpanded: true,
                     decoration: const InputDecoration(isDense: true),
                     style: const TextStyle(fontSize: 12, color: ink),
                     items: ['', ...categories]
                         .map(
                           (c) => DropdownMenuItem(
                             value: c,
-                            child: Text(c.isEmpty ? '전체 항목' : c),
+                            child: Text(
+                              c.isEmpty ? '전체 항목' : c,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         )
                         .toList(),
@@ -809,51 +829,81 @@ class _LedgerScreenState extends State<LedgerScreen> {
 
   List<Widget> reportPage() {
     final r = ledger!.reports[monthKey(month)];
+    final hasCloudAdvice =
+        r != null &&
+        r['signature'] == summary.signature &&
+        r['advicePreviousTotal'] == summary.previousTotal &&
+        r['cloudAdvice'] is String;
+    final canRequestAdvice = summary.total > 0;
     return [
       heading('소비 리포트', '내 지출에서 찾는 인사이트와 절약 계획', icon: 'imgGroup6'),
       monthPicker(),
       panel(
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xffece4ff),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              alignment: Alignment.center,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xff51428d),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: const Text(
-                  '••',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    letterSpacing: 3,
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xffece4ff),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xff51428d),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const Text(
+                      '••',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        letterSpacing: 3,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  txt(
-                    '${ledger!.name}님, 저장된 소비를 살펴볼까요?',
-                    size: 12,
-                    color: ink,
-                    bold: true,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      txt(
+                        '${ledger!.name}님, 저장된 소비를 살펴볼까요?',
+                        size: 12,
+                        color: ink,
+                        bold: true,
+                      ),
+                      txt(
+                        canRequestAdvice
+                            ? '조언을 요청하면 월별 지출·예산 집계를 서버로 보내요.'
+                            : '지출을 기록하면 Gemini 조언을 받을 수 있어요.',
+                        size: 11,
+                      ),
+                    ],
                   ),
-                  txt('계산 기반 리포트 · AI API 미연결', size: 10),
-                ],
-              ),
+                ),
+              ],
             ),
+            if (hasCloudAdvice) ...[
+              const SizedBox(height: 12),
+              txt(r['cloudAdvice'] as String, color: ink),
+            ],
+            if (canRequestAdvice) ...[
+              const SizedBox(height: 10),
+              reportAction(
+                hasCloudAdvice ? 'Gemini 조언 다시 생성' : 'Gemini 조언 받기',
+                requestCloudAdvice,
+              ),
+            ],
           ],
         ),
       ),
@@ -888,9 +938,12 @@ class _LedgerScreenState extends State<LedgerScreen> {
           ),
         section(
           '이번 달 핵심 인사이트',
-          action: smallButton(
+          action: reportAction(
             '다시 생성 ↻',
-            saving ? null : () => generateReport(),
+            () => generateReport(
+              skip: r['skip'] as int,
+              weeks: r['weeks'] as int,
+            ),
           ),
         ),
         ...List.generate((r['insights'] as List).length, (i) {
@@ -973,26 +1026,69 @@ class _LedgerScreenState extends State<LedgerScreen> {
                 '기록만으로 불필요한 구독을 판단하지 않아요. 사용 빈도를 확인한 뒤 유지 여부를 결정하세요.',
                 size: 11,
               ),
-              smallButton('반복 결제 내역 보기 ›', recurringDialog),
+              reportAction('반복 결제 내역 보기 ›', recurringDialog),
             ],
           ),
         ),
         txt(
-          '생성: ${DateTime.parse(r['generated']).toLocal().toString().substring(0, 19)} (기기 시간)\n분석: ${monthKey(month)}-01 ~ ${monthKey(month)}-${summary.days}\n각 달 전체 기록 비교 · 실제 LLM이 아닌 집계 규칙 기반입니다.',
+          '생성: ${DateTime.parse(r['generated']).toLocal().toString().substring(0, 19)} (기기 시간)\n분석: ${monthKey(month)}-01 ~ ${monthKey(month)}-${summary.days}\n각 달의 전체 기록을 비교합니다.',
           size: 10,
         ),
       ],
     ];
   }
 
+  Widget reportAction(String label, VoidCallback action) => FilledButton(
+    onPressed: saving ? null : action,
+    style: FilledButton.styleFrom(
+      minimumSize: const Size(0, 38),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+    ),
+    child: Text(label),
+  );
+
   Future<void> generateReport({int skip = 2, int weeks = 4}) async {
+    final snapshot = summary;
+    final previous = ledger!.reports[monthKey(snapshot.month)];
+    final report = buildReport(snapshot, skip: skip, weeks: weeks);
+    if (previous != null &&
+        previous['signature'] == snapshot.signature &&
+        previous['advicePreviousTotal'] == snapshot.previousTotal &&
+        previous['cloudAdvice'] is String) {
+      report['cloudAdvice'] = previous['cloudAdvice'];
+      report['advicePreviousTotal'] = snapshot.previousTotal;
+    }
     await commit(
-      () => repo!.saveReport(
-        month,
-        buildReport(summary, skip: skip, weeks: weeks),
-      ),
+      () => repo!.saveReport(snapshot.month, report),
       '계산한 리포트를 저장했어요.',
     );
+  }
+
+  Future<void> requestCloudAdvice() async {
+    if (saving || summary.total == 0) return;
+    final snapshot = summary;
+    final previous = ledger!.reports[monthKey(snapshot.month)];
+    final report = buildReport(
+      snapshot,
+      skip: previous?['skip'] as int? ?? 2,
+      weeks: previous?['weeks'] as int? ?? 4,
+    );
+    await commit(() async {
+      final String advice;
+      try {
+        advice = await cloudReport.advice(snapshot);
+      } on FormatException {
+        rethrow;
+      } on Exception {
+        throw const FormatException('서버에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.');
+      }
+      if (!mounted) return;
+      report['cloudAdvice'] = advice;
+      report['advicePreviousTotal'] = snapshot.previousTotal;
+      await repo!.saveReport(snapshot.month, report);
+    }, 'Gemini 조언을 리포트에 저장했어요.');
   }
 
   void recurringDialog() => showModalBottomSheet<void>(
@@ -1273,10 +1369,17 @@ class _LedgerScreenState extends State<LedgerScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          section('프로토타입 안내'),
-          txt('Flutter로 만든 안드로이드 앱입니다. 인터넷이나 PC 서버 없이 사용할 수 있어요.'),
+          section('프로토타입 지출'),
+          txt(
+            '${monthKey(month)}에 사용할 가상 월간 지출을 선택하세요. 이전에 적용한 같은 달의 예시만 교체해요.',
+          ),
           const SizedBox(height: 10),
-          txt('계산 기반 리포트 · AI API 미연결', size: 11, color: purple, bold: true),
+          reportAction('예시 지출 선택하기', choosePrototypeSpending),
+          const SizedBox(height: 14),
+          txt('지출 기록, 예산 관리, 기본 리포트는 오프라인에서도 사용할 수 있어요.'),
+          const SizedBox(height: 10),
+          section('Gemini 리포트'),
+          txt('리포트에서 조언을 요청하면 앱이 서버에 자동으로 연결돼요.', size: 11),
           const SizedBox(height: 10),
           txt(
             '계좌·카드번호와 소득 정보를 수집하지 않아 저축률은 표시하지 않습니다. 반복 결제는 직접 확인한 기록만 사용합니다.',
@@ -1292,7 +1395,7 @@ class _LedgerScreenState extends State<LedgerScreen> {
           section(ledger!.demo ? '예시 데이터로 시작했어요' : '모든 데이터 초기화'),
           txt(
             ledger!.demo
-                ? '현재 월 862,000원 및 지난달 비교용 가상 예시가 포함돼요. 월말까지의 가상 날짜가 있을 수 있어요. 실제 기록을 시작하려면 초기화하세요.'
+                ? '초기 예시에는 지난달 비교용 기록도 포함돼요. 월말까지의 가상 날짜가 있을 수 있어요.'
                 : '모든 월의 지출·예산·리포트를 삭제합니다. 이름은 유지됩니다.',
           ),
           const SizedBox(height: 12),
@@ -1309,4 +1412,31 @@ class _LedgerScreenState extends State<LedgerScreen> {
       size: 10,
     ),
   ];
+
+  Future<void> choosePrototypeSpending() async {
+    final target = month;
+    final choice = await showDialog<PrototypeSpending>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('${monthKey(target)} 예시 지출 선택'),
+        children: [
+          for (final profile in PrototypeSpending.values)
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, profile),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(profile.title),
+                subtitle: Text(profile.description),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || choice == null) return;
+    final applied = await commit(
+      () => repo!.applyPrototypeSpending(target, choice),
+      '${choice.title} 예시 지출을 적용했어요.',
+    );
+    if (applied && mounted) go(0);
+  }
 }
