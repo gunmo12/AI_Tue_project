@@ -4,6 +4,8 @@
 
 ## Android 실행
 
+마지막 확인 환경은 Flutter 3.47.6 stable, Dart 3.13.5입니다.
+
 ~~~powershell
 git clone https://github.com/gunmo12/AI_Tue_project.git
 cd AI_Tue_project
